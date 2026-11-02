@@ -10,8 +10,14 @@ End-to-end OMOP CDM 5.4 pipeline and time-to-event analysis on synthetic EHR dat
 ## Purpose and architecture
 An end-to-end, reproducible pipeline:
 
-```
-Synthea (CSV) → OMOP CDM v5.4 (PostgreSQL) → DataQualityDashboard → landmark T2DM cohort → Cox / Aalen-Johansen
+```mermaid
+flowchart LR
+    A[Synthea CSV<br/>10,000 pts, seed 42] --> B[OMOP CDM 5.4<br/>PostgreSQL]
+    V[Athena vocabularies<br/>user-supplied] --> B
+    B --> C[OHDSI DataQualityDashboard]
+    B --> D[Landmark T2DM cohort<br/>results.t2dm_ckd_analytic]
+    D --> E[Cause-specific Cox<br/>PH diagnostics]
+    D --> F[Kaplan-Meier /<br/>Aalen-Johansen]
 ```
 
 | Stage | Code | Output |
@@ -40,7 +46,7 @@ Synthea (CSV) → OMOP CDM v5.4 (PostgreSQL) → DataQualityDashboard → landma
 | `make survival` | Cox, Kaplan-Meier, Aalen-Johansen, forest plot; log in `output/logs/survival.log` |
 | `make analysis` | `cohort` then `survival` |
 | `make test` | pytest suite (DB tests skip if no database) |
-| `make all` | Everything |
+| `make all` | Full configured pipeline: synthea → vocab → etl → dqd → cohort → survival (Athena vocabularies must be downloaded separately; COST ETL is not included) |
 
 ## Results (synthetic data)
 
@@ -56,11 +62,11 @@ Synthea (CSV) → OMOP CDM v5.4 (PostgreSQL) → DataQualityDashboard → landma
 | death | 1,375 |
 
 ### Data quality (DQD 2.9.1, `cdm` schema, COST excluded)
-**1,464 of 1,484 evaluable pass/fail checks passed (98.65%)**; 20 failed. A further 33 checks errored and 836 were not applicable, so they are not counted in the pass rate (2,320 checks total). See `output/dqd/`.
+**1,464 of 1,484 evaluable pass/fail checks passed (98.65%)**; 20 failed. A further 33 checks errored (`isError=1`) and 836 were not applicable, so they are not counted in the pass rate (2,320 checks total). See `output/dqd/`.
 
 Reviewed limitations (`output/dqd/dqd_review_summary.csv`; no root cause is assumed):
 - **COST** was not loaded (insertion was prohibitively slow locally) and is excluded from the scan. COST-related results are not evidence about the core CDM.
-- The `results.cohort` / `cohort_definition` tables were absent at scan time: 2 failures and 46 errored checks are `expected_missing_optional_table`.
+- The optional `results.cohort` / `results.cohort_definition` tables were absent at scan time. DQD flagged 33 checks with `isError=1`; a separate review found 46 records containing error messages, all on `COHORT` / `COHORT_DEFINITION`. Together with 2 failed checks on those tables, they are labelled `expected_missing_optional_table` (the 46 vs 33 difference is how errors are counted, not extra problems).
 - 18 failures remain `requires_review` (concept completeness, plausibility of some drug and payer fields). `drug_exposure.quantity` and dose were flagged as unsuitable and are **never used** in the analysis.
 
 ### Landmark cohort (`sql/03_build_analytic_cohort.sql`)
@@ -89,7 +95,11 @@ Final cohort: **256 CKD events, 110 competing deaths, 430 censored.** Sensitivit
 | Hyperlipidemia | 0.97 | 0.64-1.46 | 0.88 |
 | Obesity | 0.81 | 0.62-1.06 | 0.13 |
 
-Schoenfeld proportional-hazards test (rank time): only hypertension was flagged (p = 0.030); all others p > 0.18. The model was not altered in response. A sensitivity model including heart failure (HR 0.21, CI 0.001-33.4, uninformative) is saved separately. A secondary cause-specific model for death is also saved and not interpreted. Forest plot: `output/figures/cox_primary_ckd_forest.png`.
+Schoenfeld proportional-hazards test (rank time): only hypertension was flagged (p = 0.030); all others p > 0.18. The model was not altered in response. A sensitivity model including heart failure (HR 0.21, CI 0.001-33.4, uninformative) is saved separately. A secondary cause-specific model for death is also saved and not interpreted. 
+
+![Primary Cox model forest plot](docs/figures/cox_primary_ckd_forest.png)
+
+*Synthetic-data methodology demonstration. The metformin estimate is exploratory and non-causal.*
 
 ### Competing-risk cumulative incidence, overall (Aalen-Johansen)
 | Years | CKD | Death before CKD |
@@ -100,6 +110,12 @@ Schoenfeld proportional-hazards test (rank time): only hypertension was flagged 
 | 20 | 0.337 | 0.139 |
 
 Per-group values are in `output/tables/aj_cumulative_incidence_by_year.csv` and must not be read causally.
+
+![CKD cumulative incidence with death as competing risk](docs/figures/aj_cumulative_incidence_ckd.png)
+
+![Kaplan-Meier CKD-free survival](docs/figures/km_ckd_free_overall.png)
+
+*Figures are copies of `output/figures/` (which is gitignored); regenerate with `make survival`.*
 
 ### Metformin: exploratory and non-causal
 Early metformin (ingredient 1503297, days 0-90 from index) occurred in 93 patients with 12 CKD events. Its estimate is imprecise and is strongly tied to the index calendar era. It is reported only as an exploratory covariate, **not as a treatment effect**.
