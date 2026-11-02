@@ -1,4 +1,6 @@
-# omop-synthea-survival
+# Synthea-to-OMOP
+
+End-to-end OMOP CDM 5.4 pipeline and time-to-event analysis on synthetic EHR data.
 
 **Time-to-event analysis of incident CKD in a synthetic OMOP T2DM cohort.**
 
