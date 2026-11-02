@@ -1,0 +1,3 @@
+-- Outcome: chronic kidney disease (CKD).
+-- Parameters: @cdm_schema, @results_schema
+-- TODO: define outcome events from condition_occurrence with CKD concept + descendants.

@@ -1,0 +1,33 @@
+# Secrets are read from environment variables (see .env.example); never hardcode them.
+db:
+  dbms: postgresql
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+
+schemas:
+  cdm: cdm
+  native: native
+  results: results
+
+paths:
+  synthea_csv: data/synthea/csv_v330
+  vocab: vocab
+  output: output
+
+synthea:
+  population: 10000
+  seed: 42
+  state: Massachusetts
+  jar_url: https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar
+  jar_path: data/tools/synthea-with-dependencies.jar
+  output_dir: data/synthea
+
+etl:
+  cdm_version: "5.4"
+  synthea_version: "3.3.0"   # Synthea CSV layout version
+  cdm_source_name: Synthea Massachusetts
+  cdm_source_abbreviation: synthea_ma
+  cdm_holder: omop-synthea-survival

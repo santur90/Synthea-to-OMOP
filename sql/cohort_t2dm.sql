@@ -1,0 +1,4 @@
+-- Cohort: type 2 diabetes mellitus (T2DM).
+-- Parameters (substituted by caller): @cdm_schema, @results_schema
+-- TODO: define cohort entry (condition_occurrence with T2DM concept + descendants),
+-- observation period requirements, and exit criteria.

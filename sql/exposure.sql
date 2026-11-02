@@ -1,0 +1,3 @@
+-- Exposure definition (e.g., drug exposure among the T2DM cohort).
+-- Parameters: @cdm_schema, @results_schema
+-- TODO: define exposed/unexposed groups from drug_era / drug_exposure.
