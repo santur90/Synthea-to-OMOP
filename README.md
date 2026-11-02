@@ -67,7 +67,7 @@ flowchart LR
 Reviewed limitations (`output/dqd/dqd_review_summary.csv`; no root cause is assumed):
 - **COST** was not loaded (insertion was prohibitively slow locally) and is excluded from the scan. COST-related results are not evidence about the core CDM.
 - The optional `results.cohort` / `results.cohort_definition` tables were absent at scan time. DQD flagged 33 checks with `isError=1`; a separate review found 46 records containing error messages, all on `COHORT` / `COHORT_DEFINITION`. Together with 2 failed checks on those tables, they are labelled `expected_missing_optional_table` (the 46 vs 33 difference is how errors are counted, not extra problems).
-- 18 failures remain `requires_review` (concept completeness, plausibility of some drug and payer fields). `drug_exposure.quantity` and dose were flagged as unsuitable and are **never used** in the analysis.
+- 18 failed checks remain classified as `requires_review`; these include concept-completeness and plausibility findings (e.g. some drug and payer fields) and are not automatically treated as ETL defects. `drug_exposure.quantity` and dose were flagged as unsuitable and are **never used** in the analysis.
 
 ### Landmark cohort (`sql/03_build_analytic_cohort.sql`)
 - Index: first T2DM condition (concept 201826 + descendants) inside an observation period. Landmark = index + 90 days.
@@ -95,7 +95,7 @@ Final cohort: **256 CKD events, 110 competing deaths, 430 censored.** Sensitivit
 | Hyperlipidemia | 0.97 | 0.64-1.46 | 0.88 |
 | Obesity | 0.81 | 0.62-1.06 | 0.13 |
 
-Schoenfeld proportional-hazards test (rank time): only hypertension was flagged (p = 0.030); all others p > 0.18. The model was not altered in response. A sensitivity model including heart failure (HR 0.21, CI 0.001-33.4, uninformative) is saved separately. A secondary cause-specific model for death is also saved and not interpreted. 
+Schoenfeld proportional-hazards test (rank time): only hypertension was flagged (p = 0.030); all others p > 0.18. The model was not altered in response. Additional sensitivity-model outputs (including a heart-failure-adjusted model and a secondary cause-specific model for death) are generated under `output/tables/` but are not used for primary interpretation. 
 
 ![Primary Cox model forest plot](docs/figures/cox_primary_ckd_forest.png)
 
