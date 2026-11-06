@@ -230,6 +230,10 @@ Parameter recovery:
 | Biomarker effect | 0.300 | 0.331 | 0.174 to 0.464 |
 | Treatment × biomarker | -0.250 | -0.343 | -0.541 to -0.137 |
 
+![Bayesian MCMC diagnostics](bayesian_trial/output/figures/bayesian_trace.png)
+
+*Four-chain NUTS posterior diagnostics for simulation-based parameter recovery.*
+
 Posterior median treatment HR was approximately **0.71**, with:
 
 `P(HR < 1 | data) = 0.9985`
